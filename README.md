@@ -1,5 +1,7 @@
 # anycodecli
 
+English | [简体中文](./README.zh-CN.md)
+
 `anycodecli` is the modular refactor workspace.
 
 Current implementation status:
