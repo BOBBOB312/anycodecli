@@ -2,95 +2,215 @@
 
 [English](./README.md) | 简体中文
 
-`anycodecli` 是一个模块化重构工作空间。
+随时随地控制 AI 编码代理 — 支持 Claude、Codex 和 Gemini 的模块化命令行工具。
 
-## 当前实现状态
+免费。开源。随处编码。
 
-- Phase 1 脚手架已实现
-- CLI 启动和命令路由已拆分为独立模块
-- 每个命令当前委托给 legacy runtime 以保持行为一致
-- Phase 2 核心模块已搭建：
-  - `domain/session/message-pipeline.ts`
-  - `domain/session/session-lifecycle.ts`
-  - `domain/session/session-orchestrator.ts`
-  - `domain/session/readiness-policy.ts`
-  - `infra/api/session-sync-client.ts`
-- Phase 3 运行时基础已搭建：
-  - `agents/contracts/agent-message.ts`（消息类型的单一来源）
-  - `agents/contracts/agent-backend.ts`
-  - `agents/contracts/permission-handler.ts`
-  - `agents/shared/legacy-process-session-runtime.ts`
-  - `agents/claude|codex|gemini/*-runtime.ts`
-  - `domain/session/legacy-runtime-factory.ts`
-- Phase 4 (Batch B) API 与同步层契约：
-  - `infra/api/types.ts`（统一的 API 类型定义）
-  - `infra/api/api-client.ts`（API 客户端接口）
-  - `infra/api/machine-sync-client.ts`（机器同步契约）
-- Phase 4 (Batch D) ACP 与 Agent 抽象：
-  - `agents/acp/acp-runtime.ts`（ACP 运行时工厂）
-  - `agents/acp/acp-process.ts`（ACP 进程生命周期）
-  - `agents/acp/acp-session-updates.ts`（会话更新分发）
-  - `agents/acp/acp-permissions.ts`（权限管道）
-- Phase 4 (Batch E) Daemon HTTP 层：
-  - `infra/daemon-http/control-server.ts`（HTTP 控制服务器契约）
-  - `infra/daemon-http/control-client.ts`（HTTP 控制客户端契约）
-- 基础设施契约：
-  - `infra/rpc/rpc-handler-registry.ts`（RPC 处理器注册表）
-  - `infra/persistence/persistence.ts`（凭证、守护进程状态、设置）
-  - `infra/logging/logger.ts`（日志契约）
-  - `infra/process/signal-manager.ts`（集中式信号处理）
-  - `domain/machine/machine-service.ts`（机器注册）
-- 兼容性层：
-  - `compatibility/cli-parity/parity-check.ts`
-- Agent 命令（`claude/codex/gemini`）现在通过 `SessionOrchestrator` 运行，
-  同时仍在底层执行 legacy provider 进程
-- 命令上下文现在对 `ProcessSpawner` 和 `SessionSyncClientFactory` 使用依赖注入，
-  因此运行时依赖是可替换的
-- Daemon 命令现在通过 `domain/daemon/daemon-orchestrator.ts` 
-  和 `domain/daemon/legacy-daemon-gateway.ts` 路由
-- Daemon 内部已拆分为可复用的服务：
-  - `domain/daemon/child-registry.ts`
-  - `domain/daemon/spawn-service.ts`
-  - `domain/daemon/heartbeat-service.ts`
-- 会话同步现在支持通过 `ANYCODECLI_SESSION_SYNC_MODE=legacy|noop` 配置模式
-- 非 agent 命令现在通过领域编排器/网关路由
-  （`domain/subcommand/*`、`domain/daemon/*`），而不是直接的命令级委托
-- Bootstrap 现在通过 `src/app/context-factory.ts` 组装依赖，使应用程序组装显式化
+## 什么是 anycodecli？
 
-## 当前完成状态
+`anycodecli` 是一个模块化的命令行界面，可以从移动设备或其他客户端远程控制 AI 编码代理（Claude、Codex、Gemini）。它提供：
 
-- 命令层重构：已完成（路由器 + 命令模块 + 编排器）
-- 会话核心重构：已完成内部抽象（`pipeline/lifecycle/orchestrator`）
-- Daemon 核心重构：已完成本地编排结构
-- API 与同步层：已完成（契约已定义，类型已统一）
-- ACP agent 抽象：已完成（runtime/process/updates/permissions 契约）
-- Daemon HTTP 层：已完成（control-server/control-client 契约）
-- 基础设施契约：已完成（RPC、持久化、日志、信号、机器）
-- 命名迁移：binary=`anycodecli`，env=`ANYCODECLI_*`，package=`anycodecli`
-- 兼容性策略：仍使用 legacy runtime 执行桥接以实现零行为漂移
+- **远程会话控制** - 启动编码会话并从移动设备控制
+- **多代理支持** - 支持 Claude Code、Codex 和 Gemini
+- **实时同步** - 跨设备的会话状态同步
+- **守护进程模式** - 后台服务管理多个会话
+- **模块化架构** - 清晰的关注点分离，易于维护
 
-这在实现零行为漂移的同时，支持内部的渐进式迁移。
-
-## 运行
+## 安装
 
 ```bash
 npm install
-npm run dev -- --help
+npm run build
 ```
 
-## 测试
+## 快速开始
+
+### 启动 Claude 会话
+
+```bash
+npm run dev -- claude
+```
+
+这将：
+1. 启动 Claude Code 会话
+2. 显示二维码以从移动设备连接
+3. 在 Claude Code 和移动应用之间实现实时会话共享
+
+### 启动 Gemini 会话
+
+```bash
+npm run dev -- gemini
+```
+
+**首次设置：**
+```bash
+# 使用 Google 进行身份验证
+npm run dev -- connect gemini
+```
+
+### 启动 Codex 会话
+
+```bash
+npm run dev -- codex
+```
+
+## 命令
+
+### 代理命令
+
+- `anycodecli claude` - 启动 Claude Code 会话（默认）
+- `anycodecli gemini` - 启动 Gemini CLI 会话
+- `anycodecli codex` - 启动 Codex 模式
+
+### 守护进程命令
+
+- `anycodecli daemon start` - 启动后台守护进程
+- `anycodecli daemon stop` - 停止后台守护进程
+- `anycodecli daemon status` - 检查守护进程状态
+- `anycodecli daemon list` - 列出活动会话
+- `anycodecli daemon spawn-session <dir>` - 生成新会话
+- `anycodecli daemon stop-session <id>` - 停止特定会话
+
+### 实用命令
+
+- `anycodecli auth login` - 管理身份验证
+- `anycodecli connect <provider>` - 连接到 AI 提供商
+- `anycodecli doctor` - 诊断问题
+- `anycodecli notify` - 发送通知
+
+## 架构
+
+anycodecli 遵循清晰的模块化架构：
+
+```
+src/
+├── app/              # 应用启动和路由
+├── commands/         # 命令实现
+├── domain/           # 业务逻辑和编排
+│   ├── session/      # 会话管理
+│   ├── daemon/       # 守护进程编排
+│   └── machine/      # 机器注册
+├── agents/           # AI 代理集成
+│   ├── claude/       # Claude 运行时
+│   ├── codex/        # Codex 运行时
+│   ├── gemini/       # Gemini 运行时
+│   └── acp/          # ACP 协议
+├── infra/            # 基础设施层
+│   ├── api/          # API 客户端
+│   ├── rpc/          # RPC 处理
+│   ├── persistence/  # 数据持久化
+│   └── logging/      # 日志
+└── compatibility/    # 兼容性层
+```
+
+### 核心设计原则
+
+- **模块化** - 清晰的关注点分离
+- **可测试** - 支持依赖注入和模拟
+- **可扩展** - 易于添加新代理或功能
+- **零行为漂移** - Legacy delegation 确保兼容性
+
+## 开发
+
+### 运行测试
 
 ```bash
 npm test
 ```
 
+### 类型检查
+
+```bash
+npm run typecheck
+```
+
+### 命名规范检查
+
+```bash
+npm run check-naming
+```
+
+### 完整 CI 流程
+
+```bash
+npm run ci
+```
+
+## 配置
+
+### 环境变量
+
+- `ANYCODECLI_SESSION_SYNC_MODE` - 会话同步模式（`legacy` 或 `noop`）
+- `ANYCODECLI_LEGACY_ENTRY` - Legacy CLI 入口点路径
+
+### 会话模式
+
+- **本地模式** - 在本地运行代理
+- **远程模式** - 连接到远程守护进程
+- **守护进程模式** - 管理多个会话的后台服务
+
 ## 文档
 
-完整文档请查看 [`docs/`](./docs) 目录：
+完整文档位于 [`docs/`](./docs) 目录：
 
-- **[REFACTOR_PLAN.md](./docs/REFACTOR_PLAN.md)** - 详细重构方案
-- **[BASELINE_REPORT.md](./docs/BASELINE_REPORT.md)** - 基线报告
+- **[REFACTOR_PLAN.md](./docs/REFACTOR_PLAN.md)** - 详细的重构计划和架构
+- **[BASELINE_REPORT.md](./docs/BASELINE_REPORT.md)** - 基线行为报告
 - **[CI_NAMING_GUARD.md](./docs/CI_NAMING_GUARD.md)** - CI 命名守卫文档
-- **[INTERFACE_CONTRACTS.md](./docs/INTERFACE_CONTRACTS.md)** - 接口契约定义
+- **[INTERFACE_CONTRACTS.md](./docs/INTERFACE_CONTRACTS.md)** - 接口契约
 
 查看 [docs/README.md](./docs/README.md) 获取完整文档导航。
+
+## 项目状态
+
+当前实现使用 **legacy delegation 策略**，以确保在重构过程中零行为漂移：
+
+- ✅ 命令层已重构（路由器 + 模块 + 编排器）
+- ✅ 会话核心已重构（pipeline/lifecycle/orchestrator）
+- ✅ 守护进程核心已重构（编排结构）
+- ✅ API 与同步层（契约已定义，类型已统一）
+- ✅ 代理抽象（runtime/process/updates/permissions）
+- ✅ 基础设施契约（RPC、持久化、日志、信号）
+- ✅ 命名统一（所有地方都使用 `anycodecli`）
+- ✅ CI 命名守卫（自动检查）
+
+所有命令当前委托给 legacy runtime 以保持精确的行为，同时内部架构正在现代化。
+
+## 测试
+
+项目包含全面的测试覆盖：
+
+- **18 个测试文件**，**79 个测试用例**
+- 单个模块的单元测试
+- 命令流程的集成测试
+- 确保行为一致性的 Parity 测试
+- 防止 legacy 命名的 CI 命名守卫
+
+运行测试：
+
+```bash
+npm test
+```
+
+## 贡献
+
+欢迎贡献！请：
+
+1. 阅读 [REFACTOR_PLAN.md](./docs/REFACTOR_PLAN.md) 了解架构
+2. 遵循现有的代码风格和模式
+3. 为新功能添加测试
+4. 确保所有 CI 检查通过（`npm run ci`）
+
+## 许可证
+
+MIT
+
+## 相关项目
+
+- **happy-cli** - 原始 CLI 实现
+- **移动应用** - 用于远程控制的配套移动应用
+
+## 链接
+
+- **GitHub 仓库**：https://github.com/BOBBOB312/anycodecli
+- **文档**：https://github.com/BOBBOB312/anycodecli/tree/main/docs
+- **问题反馈**：https://github.com/BOBBOB312/anycodecli/issues
